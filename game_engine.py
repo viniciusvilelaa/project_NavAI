@@ -40,4 +40,37 @@ class BattleShipBoard:
             return False, "Orientação inválida. Use 'H' (horizontal) ou 'V' (vertical)."
         
         return True, "Posicionamento válido."
-            
+
+    #Posiciona navio dada a coordenada       
+    def place_ship(self, size, start_row, start_col, orientation):
+        
+        #Verifica se o posicionamento é valido 
+        is_valid, reason = self.is_valid_placement(size, start_row, start_col, orientation)
+        
+        if not is_valid:
+            raise ValueError(reason)
+        
+        ship_id = self._next_ship_id
+        coordinates = []
+
+        #Preenche o grid com o navio e gera a lista das coordenadas
+        if orientation == "H":
+            end_col = start_col + size
+            self.grid[start_row, start_col:end_col] = ship_id
+            coordinates = [(start_row,col) for col in range(start_col, end_col)]
+        
+        elif orientation == "V":
+            end_row = start_row + size
+            self.grid[start_row:end_row, start_col] = ship_id
+            coordinates = [(row, start_col) for row in range(start_row, end_row)]
+
+        #Registra o navio no dicionario de navios
+        self.ships[ship_id] = {
+            "size": size,
+            "hits": 0,
+            "coordinates": coordinates
+        }
+
+        self._next_ship_id += 1
+
+        return ship_id
