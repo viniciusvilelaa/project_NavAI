@@ -74,3 +74,28 @@ class BattleShipBoard:
         self._next_ship_id += 1
 
         return ship_id
+
+    def shot_ship(self, row, col):
+        
+        #Verifica se a coordenada é valida
+        if not (0 <= row < 10 and 0 <= col < 10):
+            raise ValueError("Coordenada de disparo fora do tabuleiro")
+        
+        current_value = self.grid[row,col]
+
+        if current_value == -1 or current_value == -2:
+            return "Tiro repetido", None
+        
+        if current_value == 0:
+            self.grid[row, col] = -1
+            return "Miss", None
+        
+        ship_id = current_value
+        self.grid[row, col] = -2
+        self.ships[ship_id]["hits"] += 1
+
+        if self.ships[ship_id]["hits"] == self.ships[ship_id]["size"]:
+            return "sunk", ship_id
+        
+        return "hit", ship_id
+
