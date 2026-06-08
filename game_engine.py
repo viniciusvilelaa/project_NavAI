@@ -106,4 +106,18 @@ class BattleShipBoard:
         
         return all(ship["hits"] == ship["size"] for ship in self.ships.values())
 
-    
+    def place_ships_randomly(self):
+        ship_sizes = [5, 4, 3, 3, 2]
+
+        for size in ship_sizes:
+            placed = False
+            while not placed:
+                row = np.random.randint(0,10)
+                col = np.random.randint(0, 10)
+                orientation = np.random.choice(['H','V'])
+
+                is_valid, _ = self.is_valid_placement(size, row, col, orientation)
+                if is_valid:
+                    self.place_ship(size, row, col, orientation)
+                    placed = True
+        
