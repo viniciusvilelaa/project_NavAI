@@ -99,3 +99,11 @@ class BattleShipBoard:
         
         return "hit", ship_id
 
+    def all_ships_sunk(self):
+
+        if not self.ships:
+            return False
+        
+        return all(ship["hits"] == ship["size"] for ship in self.ships.values())
+
+    
