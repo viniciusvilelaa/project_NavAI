@@ -110,7 +110,9 @@ class NavalAgent:
         #Zera a probabilidade da casa atirada
         self.belief_state[row, col] = 0.0
 
+    #Modo de target do agente
     def _target_mode_action(self):
+        #Enquanto lista de target nao for nula percorre a lista e retorna as coordenadas do proximo alvo
         while self._target_queue:
             row, col = self._target_queue.pop(0)
             if 0 <= row < self.board_size and 0 <= col < self.board_size:
@@ -119,12 +121,20 @@ class NavalAgent:
         
         return None
     
+
+    #Modo de caça do agente
     def _hunt_mode_action(self):
+        #Cria uma copia do grid de probabilidades
         temp_belief = np.copy(self.belief_state)
+
+        #Percorre as casas ja atiradas e atribui probabilidade 0
         for row, col in self.shots_fired:
             temp_belief[row, col] = 0.0
-        
+
+        #Maior valor de probabilidade presente no belief        
         max_val = np.max(temp_belief)
+
+        #Salva em uma lista todos as casas que possuem valor maximo
         rows, cols = np.where(temp_belief == max_val)
         candidates = list(zip(rows,cols))
 
@@ -135,23 +145,11 @@ class NavalAgent:
     def choose_action(self):
 
         #TARGET: tem vizinhos de um hit na fila
-        if self._mode == "TARGET" and self._target_queue:
-            return self._target_queue.pop(0)
-
-        # Modo HUNT: escolhe a casa com maior probabilidade
-        max_prob = -1
-        best_action = None
-
-        #Percorre todas as linhas e colunas do tabuleiro
-        for row in range(self.board_size):
-            for col in range(self.board_size):
-                #Ignora as coordenadas onde o agente já atirou
-                if (row, col) not in self.shots_fired:
-
-                    #Compara o valor da célula atual com o maior valor salvo
-                    if self.belief_state[row, col] > max_prob:
-                        max_prob = self.belief_state[row, col]
-                        best_action = (row, col)
-
-        # Retorna a coordenada que tem maior chance de ter um navio
-        return best_action
+        if self._mode == "TARGET":
+            action = self._target_mode_action()
+            if action is not None:
+                return action
+            
+            self._mode = "HUNT"
+        
+        return self._hunt_mode_action()
