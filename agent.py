@@ -30,3 +30,20 @@ class NavalAgent:
         self._mode = "HUNT"
         self._target_queue = []
         self._active_hits = []
+
+
+    #Retorna as estatísticas de desempenho do agente atual
+    def get_metrics(self):
+        if self.total_shots == 0:
+            accuracy = 0.0
+        else: 
+            #Calcula a taxa de acerto (Hits / Total)
+            accuracy = self.total_hits / self.total_shots
+
+        return {
+            "total_shots": self.total_shots,
+            "total_hits": self.total_hits,
+            "total_misses": self.total_misses,
+            "accuracy": round(accuracy, 3)
+        }
+   
