@@ -118,7 +118,18 @@ class NavalAgent:
                     return (row, col)
         
         return None
-         
+    
+    def _hunt_mode_action(self):
+        temp_belief = np.copy(self.belief_state)
+        for row, col in self.shots_fired:
+            temp_belief[row, col] = 0.0
+        
+        max_val = np.max(temp_belief)
+        rows, cols = np.where(temp_belief == max_val)
+        candidates = list(zip(rows,cols))
+
+        return random.choice(candidates)
+        
    
     #Decide qual será a próxima coordenada de disparo
     def choose_action(self):
