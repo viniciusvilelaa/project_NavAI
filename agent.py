@@ -70,13 +70,13 @@ class NavalAgent:
         return neighbors
     
 
-    #Processa o feedback do tabuleiro após cada tiro.
+    #Processa o feedback do tabuleiro após cada tiro
     def update(self, row, col, result):
         # Registra o tiro
         self.shots_fired.add((row, col))
         self.total_shots += 1
 
-        # Marca o knowledge_map
+        # Atualiza o knowledge_map
         if result == "MISS":
             self.total_misses += 1
             self.knowledge_map[row, col] = -1
@@ -108,3 +108,27 @@ class NavalAgent:
         #Zera a probabilidade da casa atirada
         self.belief_state[row, col] = 0.0
    
+    #Decide qual será a próxima coordenada de disparo
+    def choose_action(self):
+
+        #TARGET: tem vizinhos de um hit na fila
+        if self._mode == "TARGET" and self._target_queue:
+            return self._target_queue.pop(0)
+
+        # Modo HUNT: escolhe a casa com maior probabilidade
+        max_prob = -1
+        best_action = None
+
+        #Percorre todas as linhas e colunas do tabuleiro
+        for row in range(self.board_size):
+            for col in range(self.board_size):
+                #Ignora as coordenadas onde o agente já atirou
+                if (row, col) not in self.shots_fired:
+
+                    #Compara o valor da célula atual com o maior valor salvo
+                    if self.belief_state[row, col] > max_prob:
+                        max_prob = self.belief_state[row, col]
+                        best_action = (row, col)
+
+        # Retorna a coordenada que tem maior chance de ter um navio
+        return best_action
