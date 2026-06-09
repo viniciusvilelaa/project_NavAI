@@ -68,4 +68,43 @@ class NavalAgent:
                     neighbors.append((r, c))
 
         return neighbors
+    
+
+    #Processa o feedback do tabuleiro após cada tiro.
+    def update(self, row, col, result):
+        # Registra o tiro
+        self.shots_fired.add((row, col))
+        self.total_shots += 1
+
+        # Marca o knowledge_map
+        if result == "MISS":
+            self.total_misses += 1
+            self.knowledge_map[row, col] = -1
+
+        elif result == "HIT":
+            self.total_hits += 1
+            self.knowledge_map[row, col] = -2
+            self._active_hits.append((row, col))
+
+            #Acertou um navio/muda para TARGET
+            self._mode = "TARGET"
+
+            #Adiciona os vizinhos na fila de alvos
+            for neighbor in self._get_neighbors(row, col):
+                if neighbor not in self._target_queue:
+                    self._target_queue.append(neighbor)
+
+        elif result == "SUNK":
+            self.total_hits += 1
+            self.knowledge_map[row, col] = -2
+
+            #Limpa o estado de caça
+            self._active_hits.clear()
+            self._target_queue.clear()
+
+            #Retorna para HUNT 
+            self._mode = "HUNT"
+
+        #Zera a probabilidade da casa atirada
+        self.belief_state[row, col] = 0.0
    
