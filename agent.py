@@ -46,4 +46,26 @@ class NavalAgent:
             "total_misses": self.total_misses,
             "accuracy": round(accuracy, 3)
         }
+    
+    
+    #Retorna as cordenadas dos vizinhos a um ponto
+    def _get_neighbors(self, row, col): 
+        candidates = [
+            (row - 1, col), #Cima
+            (row + 1, col), #Baixo
+            (row, col - 1), #Esquerda
+            (row, col + 1), #Direita 
+        ]
+
+        neighbors = [] 
+
+        for r, c in candidates: 
+            #Verifica se alguma coordenada não cai pra fora do tabuleiro
+            if 0 <= r < self.board_size and 0 <= c < self.board_size:
+
+                #Só adiciona se o agente já não tiver atirado 
+                if (r, c) not in self.shots_fired:
+                    neighbors.append((r, c))
+
+        return neighbors
    
