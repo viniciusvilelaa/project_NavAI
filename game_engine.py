@@ -26,7 +26,8 @@ class BattleShipBoard:
             ship_area = self.grid[start_row, start_col:end_col]
             if np.any(ship_area != 0):
                 return False, "O navio se sobrepõe a outro navio existente."
-        
+
+        #Se a orientacao for vertical o navio se estende para a direita
         elif orientation == "V":
             end_row = start_row + size
             if end_row > 10:
@@ -81,24 +82,29 @@ class BattleShipBoard:
         if not (0 <= row < 10 and 0 <= col < 10):
             raise ValueError("Coordenada de disparo fora do tabuleiro")
         
+        #Atribui o valor da casa, podendo ser -1(miss), -2(navio afundado), 0(agua) e positivos para os navios
         current_value = self.grid[row,col]
 
+        #Verifica situacao do tiro
         if current_value == -1 or current_value == -2:
-            return "Tiro repetido", None
+            return "REPEATED", None
         
         if current_value == 0:
             self.grid[row, col] = -1
-            return "Miss", None
+            return "MISS", None
         
+        #Se acertar um navio atualiza o contador de hits do mesmo
         ship_id = current_value
         self.grid[row, col] = -2
         self.ships[ship_id]["hits"] += 1
 
+        #Se o navio afundou com o tiro retorna SUNK
         if self.ships[ship_id]["hits"] == self.ships[ship_id]["size"]:
-            return "sunk", ship_id
+            return "SUNK", ship_id
         
-        return "hit", ship_id
+        return "HIT", ship_id
 
+    #Verificacao de estado terminal, todos os navios foram afundados?
     def all_ships_sunk(self):
 
         if not self.ships:
@@ -106,6 +112,7 @@ class BattleShipBoard:
         
         return all(ship["hits"] == ship["size"] for ship in self.ships.values())
 
+    #Adiciona navios no tabuleiro de forma automatica
     def place_ships_randomly(self):
         ship_sizes = [5, 4, 3, 3, 2]
 
