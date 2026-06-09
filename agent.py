@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class NavalAgent:
     def __init__(self , board_size=10):
@@ -72,6 +73,7 @@ class NavalAgent:
 
     #Processa o feedback do tabuleiro após cada tiro
     def update(self, row, col, result):
+        
         # Registra o tiro
         self.shots_fired.add((row, col))
         self.total_shots += 1
@@ -107,6 +109,16 @@ class NavalAgent:
 
         #Zera a probabilidade da casa atirada
         self.belief_state[row, col] = 0.0
+
+    def _target_mode_action(self):
+        while self._target_queue:
+            row, col = self._target_queue.pop(0)
+            if 0 <= row < self.board_size and 0 <= col < self.board_size:
+                if (row, col) not in self.shots_fired:
+                    return (row, col)
+        
+        return None
+         
    
     #Decide qual será a próxima coordenada de disparo
     def choose_action(self):
