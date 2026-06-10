@@ -117,11 +117,13 @@ class NavalAgent:
             
         self.belief_state = new_belief
     
+    #Metodo para computar tiro errado
     def _process_miss(self, row,col):
         self.knowledge_map[row,col] = -1
         self.belief_state[row, col] = 0
         self.total_misses += 1
-    
+        
+    #Metodo para computar tiro acertado
     def _process_hit(self, row, col):
         self.knowledge_map[row,col] = -2
         self.belief_state[row, col] = 0
@@ -133,6 +135,7 @@ class NavalAgent:
         
         self._enqueue_neighbors(row, col)
     
+    #Metodo para computar navio afundado
     def _process_hit_sunk(self, row, col):
         self.knowledge_map[row][col] = -2
         self.belief_state[row][col] = 0.0
@@ -185,6 +188,16 @@ class NavalAgent:
         for row, col in self.shots_fired:
             temp_belief[row, col] = 0.0
 
+        #Fallback 
+        if temp_belief.max() == 0:
+            available = [
+                (r, c)
+                for r in range(self.board_size)
+                for c in range(self.board_size)
+                if (r, c) not in self.shots_fired
+            ]
+            return random.choice(available)
+    
         #Maior valor de probabilidade presente no belief        
         max_val = np.max(temp_belief)
 
