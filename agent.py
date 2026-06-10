@@ -83,8 +83,39 @@ class NavalAgent:
             if 0 <= candidate_row < self.board_size and 0 <= candidate_col < self.board_size:
                 if (candidate_row, candidate_col) not in self.shots_fired and (candidate_row, candidate_col) not in self._target_queue:
                     self._target_queue.append((candidate_row, candidate_col))
-                    
-                
+    
+    #Funçao para atualizar o mapa de probabilidade
+    def _update_belief_state(self):
+        
+        #Inicializa um novo mapa
+        new_belief = np.zeros((self.board_size, self.board_size), dtype=float)
+        
+        #Para cada tamanho de barco busca os locais em que o barco caberia horizontalmente
+        for size in [5, 4, 3, 3, 2]:
+            for r in range(self.board_size):
+                for c in range(self.board_size - size + 1):
+                    segment = self.knowledge_map[r, c:c + size]
+                    #Caso tenha alguma celula -1(miss) o segmento é invalido
+                    if not np.any(segment == -1):
+                        new_belief[r, c:c + size] += 1
+        
+        #Para cada tamanho de barco busca os locais em que o barco cabe verticalmente
+        for size in [5, 4, 3, 3, 2]:
+            for c in range(self.board_size):
+                for r in range(self.board_size - size + 1):
+                    segment = self.knowledge_map[r:r + size, c]
+                    #Caso tenha alguma celula -1(miss) o segmento é invalido
+                    if not np.any(segment == -1):
+                        new_belief[r:r + size, c] += 1
+        
+        #Zera todas as probabilidades das casas que ja foram atiradas
+        for (row, col) in self.shots_fired:
+            new_belief[row,col] = 0
+        
+        if new_belief.max() > 0:
+            new_belief /= new_belief.max()
+            
+        self.belief_state = new_belief
     
     def _process_miss(self, row,col):
         self.knowledge_map[row,col] = -1
@@ -129,6 +160,8 @@ class NavalAgent:
 
         elif result == "SUNK":
             self._process_hit_sunk(row, col)
+            
+        self._update_belief_state()
 
 
     #Modo de target do agente
