@@ -1,5 +1,5 @@
 BOARD_SIZE = 10
-CELL_WIDTH = 4
+CELL_WIDTH = 3
 
 DEFAULT_FLEET = (
     ("Porta-avioes", 5),
