@@ -12,7 +12,7 @@ from interface.controls import CoordinateSelector, DebugOutcome
 from interface.models import PublicGameState, ShotResult
 from interface.placement import place_fleet_randomly
 from interface.rendering import ConsoleRenderer
-from interface.results import normalize_result
+from interface.results import display_result, normalize_result
 from interface.views import build_public_view
 
 
@@ -143,6 +143,14 @@ class BattleshipCLI:
     def _agent_turn(self) -> ShotResult:
         for _ in range(100):
             row, col = self.agent_adapter.choose_shot(self._build_agent_state())
+            self.renderer.animate_agent_target(
+                self.human_board,
+                self.agent_board,
+                self.history,
+                start=self.last_selection.get("human", (0, 0)),
+                target=(row, col),
+            )
+            self.last_selection["human"] = (row, col)
             try:
                 result, ship_id = self.human_board.shot_ship(row, col)
             except ValueError:

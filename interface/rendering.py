@@ -6,6 +6,7 @@ from typing import Any
 from interface.constants import CELL_WIDTH
 from interface.contracts import BoardProtocol
 from interface.models import ShotResult
+from interface.results import display_result
 
 try:
     from rich import box
@@ -58,7 +59,7 @@ class ConsoleRenderer:
         print("\n" * 2)
         print(format_board_plain("Sua frota", human_board, reveal_ships=True))
         if show_enemy:
-            print(format_board_plain("Aguas inimigas", agent_board, reveal_ships=False))
+            print(format_board_plain("Águas inimigas", agent_board, reveal_ships=False))
         self._render_history_plain(history)
 
     def write(self, message: str) -> None:
@@ -77,10 +78,13 @@ class ConsoleRenderer:
         placement_preview: tuple[str, int, int, int, str, bool] | None = None,
         status: str | None = None,
         show_enemy: bool = True,
+        flash_attacker: str | None = None,
+        flash_active: bool = False,
     ) -> Any:
         if not self.console:
             return format_board_plain("Sua frota", human_board, reveal_ships=True)
 
+        board_rows = max(board_shape(human_board)[0], board_shape(agent_board)[0])
         panels = [
             make_board_table(
                 "Sua frota",
@@ -102,12 +106,93 @@ class ConsoleRenderer:
                     placement_preview=placement_preview if placement_preview and placement_preview[0] == "agent" else None,
                 )
             )
-        panels.append(make_history_panel(history))
+        panels.append(make_side_panel(history, board_rows, flash_attacker=flash_attacker, flash_active=flash_active))
 
         body = Columns(panels, equal=False, expand=True) if Columns else panels
-        if status and Panel:
-            return Group(Panel(status, title="Controle"), body) if Group else body
+        if Panel and Group:
+            return Group(Panel(status or "Aguardando ação.", title="Controle"), body)
         return body
+
+    def animate_agent_target(
+        self,
+        human_board: BoardProtocol,
+        agent_board: BoardProtocol,
+        history: list[ShotResult],
+        start: tuple[int, int],
+        target: tuple[int, int],
+    ) -> None:
+        if not self.console or Live is None:
+            time.sleep(1)
+            return
+
+        path = cursor_path(start, target)
+        delay = min(0.045, max(0.012, 0.35 / max(len(path), 1)))
+        with Live(
+            self.make_screen(
+                human_board,
+                agent_board,
+                history,
+                selection=("human", path[0][0], path[0][1]),
+                selection_active=True,
+                status="Agente mirando...",
+            ),
+            console=self.console,
+            screen=True,
+            transient=True,
+            refresh_per_second=20,
+        ) as live:
+            for row, col in path:
+                live.update(
+                    self.make_screen(
+                        human_board,
+                        agent_board,
+                        history,
+                        selection=("human", row, col),
+                        selection_active=True,
+                        status="Agente mirando...",
+                    )
+                )
+                time.sleep(delay)
+            time.sleep(0.08)
+
+    def flash_result(
+        self,
+        human_board: BoardProtocol,
+        agent_board: BoardProtocol,
+        history: list[ShotResult],
+        attacker: str,
+    ) -> None:
+        if not self.console or Live is None:
+            return
+
+        with Live(
+            self.make_screen_with_flash(human_board, agent_board, history, attacker, True),
+            console=self.console,
+            screen=True,
+            transient=True,
+            refresh_per_second=10,
+        ) as live:
+            for active in (True, False, True, False, True):
+                live.update(self.make_screen_with_flash(human_board, agent_board, history, attacker, active))
+                time.sleep(0.14)
+        self.render(human_board, agent_board, history)
+
+    def make_screen_with_flash(
+        self,
+        human_board: BoardProtocol,
+        agent_board: BoardProtocol,
+        history: list[ShotResult],
+        attacker: str,
+        flash_active: bool,
+    ) -> Any:
+        return self.make_screen(
+            human_board,
+            agent_board,
+            history,
+            status="Resultado do tiro.",
+            flash_attacker=attacker,
+            flash_active=flash_active,
+        )
 
     def show_outcome(
         self,
@@ -220,10 +305,73 @@ def make_board_table(
     return table
 
 
-def make_history_panel(history: list[ShotResult]) -> Any:
-    lines = [f"{item.attacker}: {item.coordinate} -> {item.result}" for item in history[-12:]]
+def make_side_panel(
+    history: list[ShotResult],
+    board_rows: int,
+    flash_attacker: str | None = None,
+    flash_active: bool = False,
+) -> Any:
+    if not Group:
+        return make_history_panel(history)
+    board_height = 2 * board_rows + 5
+    result_height = 8
+    history_height = max(6, board_height - (2 * result_height) - 1)
+    return Group(
+        make_history_panel(history, height=history_height),
+        Text("") if Text else "",
+        make_player_result_panel(
+            history,
+            attacker="human",
+            title="Seu tiro",
+            flash_active=flash_attacker == "human" and flash_active,
+            height=result_height,
+        ),
+        make_player_result_panel(
+            history,
+            attacker="agent",
+            title="Agente",
+            flash_active=flash_attacker == "agent" and flash_active,
+            height=result_height,
+        ),
+    )
+
+
+def make_history_panel(history: list[ShotResult], height: int | None = None) -> Any:
+    lines = [f"{item.attacker}: {item.coordinate} -> {display_result(item.result)}" for item in history[-12:]]
     content = "\n".join(lines) if lines else "Sem tiros ainda."
-    return Panel(content, title="Historico", width=32) if Panel else content
+    if Panel:
+        return Panel(content, title="Histórico", width=32, height=height)
+    return content
+
+def make_player_result_panel(
+    history: list[ShotResult],
+    attacker: str,
+    title: str,
+    flash_active: bool = False,
+    height: int | None = None,
+) -> Any:
+    latest = latest_for_attacker(history, attacker)
+    if latest is None:
+        content = "Aguardando tiro."
+        return Panel(content, title=title, width=32, height=height) if Panel else content
+
+    lines = result_ascii(latest.result)
+    color = "bold yellow" if flash_active else result_color(latest.result)
+    label = f"{latest.coordinate} -> {display_result(latest.result)}"
+    if Text:
+        text = Text("\n".join(lines), style=color)
+        text.append(f"\n{label}", style="bold white")
+        content = Align.center(text) if Align else text
+    else:
+        content = "\n".join(lines + [label])
+    return Panel(content, title=title, width=32, height=height, border_style=color) if Panel else content
+
+
+def latest_for_attacker(history: list[ShotResult], attacker: str) -> ShotResult | None:
+    for item in reversed(history):
+        if item.attacker == attacker:
+            return item
+    return None
 
 
 def format_board_plain(title: str, board: BoardProtocol, reveal_ships: bool) -> str:
@@ -253,8 +401,8 @@ def render_cell(
     if preview:
         style = "black on green bold" if preview_valid else "white on red bold"
         return f"[{style}]{text_value}[/]"
-    if selected:
-        style = "black on yellow bold" if selection_active else "yellow on grey23 bold"
+    if selected and selection_active:
+        style = "black on yellow bold"
         return f"[{style}]{text_value}[/]"
     if value == -1:
         return f"[on blue]{text_value}[/]"
@@ -287,8 +435,8 @@ def cell_style(
 ) -> str:
     if preview:
         return "on green" if preview_valid else "on red"
-    if selected:
-        return "on yellow" if selection_active else "on grey37"
+    if selected and selection_active:
+        return "on yellow"
     if value == -1:
         return "on blue"
     if value == -2:
@@ -298,8 +446,68 @@ def cell_style(
     return "on grey23" if checker else "on grey15"
 
 
+def result_ascii(result: str) -> list[str]:
+    normalized = result.strip().lower()
+    if normalized == "agua":
+        return [
+            "M   M  III   SSS   SSS ",
+            "MM MM   I   S     S    ",
+            "M M M   I    SSS   SSS ",
+            "M   M   I       S     S",
+            "M   M  III  SSS   SSS ",
+        ]
+    if normalized == "acerto":
+        return [
+            "H   H  III  TTTTT",
+            "H   H   I     T  ",
+            "HHHHH   I     T  ",
+            "H   H   I     T  ",
+            "H   H  III    T  ",
+        ]
+    if normalized == "afundado":
+        return [
+            " SSS  U   U  N   N  K  K",
+            "S     U   U  NN  N  K K ",
+            " SSS  U   U  N N N  KK  ",
+            "    S U   U  N  NN  K K ",
+            "SSS    UUU   N   N  K  K",
+        ]
+    return [
+        "R R   EEE  SSS ",
+        "RR    E    S   ",
+        "R R   EEE   SSS",
+    ]
+
+
+def result_color(result: str) -> str:
+    normalized = result.strip().lower()
+    if normalized == "agua":
+        return "bold blue"
+    if normalized == "acerto":
+        return "bold red"
+    if normalized == "afundado":
+        return "bold magenta"
+    return "bold yellow"
+
+
 def board_shape(board: BoardProtocol) -> tuple[int, int]:
     return int(board.grid.shape[0]), int(board.grid.shape[1])
+
+
+def cursor_path(start: tuple[int, int], target: tuple[int, int]) -> list[tuple[int, int]]:
+    row, col = start
+    target_row, target_col = target
+    path = [(row, col)]
+
+    while row != target_row:
+        row += 1 if target_row > row else -1
+        path.append((row, col))
+
+    while col != target_col:
+        col += 1 if target_col > col else -1
+        path.append((row, col))
+
+    return path
 
 
 def preview_coordinates(
