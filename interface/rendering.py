@@ -69,8 +69,8 @@ class ConsoleRenderer:
 
     def make_screen(
         self,
-        human_board: BattleShipBoard,
-        agent_board: BattleShipBoard,
+        human_board: BoardProtocol,
+        agent_board: BoardProtocol,
         history: list[ShotResult],
         selection: tuple[str, int, int] | None = None,
         selection_active: bool = True,

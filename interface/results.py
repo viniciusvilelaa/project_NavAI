@@ -6,6 +6,6 @@ def normalize_result(result: str) -> str:
         return "acerto"
     if text in {"sunk", "afundado"}:
         return "afundado"
-    if "repetido" in text:
+    if text in {"repeated", "tiro repetido"} or "repetido" in text:
         return "tiro repetido"
     return text

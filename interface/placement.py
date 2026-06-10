@@ -7,6 +7,12 @@ from interface.contracts import BoardProtocol
 
 
 def place_fleet_randomly(board: BoardProtocol, fleet: Iterable[tuple[str, int]]) -> None:
+    fleet = list(fleet)
+    engine_random_placement = getattr(board, "place_ships_randomly", None)
+    if callable(engine_random_placement) and [size for _, size in fleet] == [5, 4, 3, 3, 2]:
+        engine_random_placement()
+        return
+
     row_count, col_count = board.grid.shape
     for _, size in fleet:
         for _ in range(1000):

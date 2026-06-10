@@ -21,6 +21,9 @@ class BoardProtocol(Protocol):
     def all_ships_sunk(self) -> bool:
         ...
 
+    def place_ships_randomly(self) -> None:
+        ...
+
 
 class AgentProtocol(Protocol):
     def choose_shot(self, state: PublicGameState) -> tuple[int, int]:
