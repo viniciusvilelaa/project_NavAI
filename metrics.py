@@ -35,3 +35,26 @@ class Metrics:
         self.total_shots = 0
         self.total_hits = 0
         self.total_misses = 0
+
+    def get_summary(self):
+        
+        if not self.history:
+            return "Nenhuma partida registrada ainda."
+
+        shots_list = [p["total_shots"] for p in self.history]
+        accuracy_list = [p["accuracy"] for p in self.history]
+
+        return {
+            "partidas_jogadas": len(self.history),
+
+            # Eficiência
+            "media_tiros": round(np.mean(shots_list), 2),
+            "menor_tiros": int(np.min(shots_list)),
+
+            # Precisão
+            "media_acerto": round(np.mean(accuracy_list), 3),
+            "maior_acerto": round(np.max(accuracy_list), 3),
+
+            # Consistência
+            "desvio_padrao_tiros": round(np.std(shots_list), 2),
+    }
