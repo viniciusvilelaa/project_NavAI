@@ -48,42 +48,26 @@ class NavalAgent:
             "accuracy": round(accuracy, 3)
         }
     
-    
-    #Retorna as cordenadas dos vizinhos a um ponto
-    def _get_neighbors(self, row, col): 
-        candidates = [
-            (row - 1, col), #Cima
-            (row + 1, col), #Baixo
-            (row, col - 1), #Esquerda
-            (row, col + 1), #Direita 
-        ]
-
-        neighbors = [] 
-
-        for r, c in candidates: 
-            #Verifica se alguma coordenada não cai pra fora do tabuleiro
-            if 0 <= r < self.board_size and 0 <= c < self.board_size:
-
-                #Só adiciona se o agente já não tiver atirado 
-                if (r, c) not in self.shots_fired:
-                    neighbors.append((r, c))
-
-        return neighbors
-    
+    #Metodo para enfileiramento de vizinhos
     def _enqueue_neighbors(self, row,col):
         hits_same_line = []
         hits_same_col = []
         candidates = []
         
-        
+        #Verificacao de acertos enfileirados
         for r, c in self._active_hits:
+            #Retorna acertos que estao apenas na linha do alvo atual
             if r == row:
                 hits_same_line.append((r,c))
+            #Retorna acertos que estao apenas na coluna do alvo atual
             if c == col:
                 hits_same_col.append((r,c))
         
+        #Se tem dois acertos na mesma linha o navio esta na horizontal
         if len(hits_same_line) >= 2:
             candidates = [(row, col-1), (row, col+1)]
+        
+        #Se tem dois acertos na mesma coluna o navio esta na vertical
         elif len(hits_same_col) >= 2:
             candidates = [(row - 1, col), (row + 1, col)]
         else:
@@ -93,13 +77,13 @@ class NavalAgent:
                 (row, col - 1), #Esquerda
                 (row, col + 1)
             ]
-            
+        
+        #Para cada candidato verifica se esta no shots_fireds e no target_queue caso nao esteja é inserido
         for candidate_row, candidate_col in candidates:
             if 0 <= candidate_row < self.board_size and 0 <= candidate_col < self.board_size:
                 if (candidate_row, candidate_col) not in self.shots_fired and (candidate_row, candidate_col) not in self._target_queue:
                     self._target_queue.append((candidate_row, candidate_col))
                     
-            
                 
     
     def _process_miss(self, row,col):
@@ -138,35 +122,14 @@ class NavalAgent:
 
         # Atualiza o knowledge_map
         if result == "MISS":
-            self.total_misses += 1
-            self.knowledge_map[row, col] = -1
+            self._process_miss(row,col)
 
         elif result == "HIT":
-            self.total_hits += 1
-            self.knowledge_map[row, col] = -2
-            self._active_hits.append((row, col))
-
-            #Acertou um navio/muda para TARGET
-            self._mode = "TARGET"
-
-            #Adiciona os vizinhos na fila de alvos
-            for neighbor in self._get_neighbors(row, col):
-                if neighbor not in self._target_queue:
-                    self._target_queue.append(neighbor)
+            self._process_hit(row, col)
 
         elif result == "SUNK":
-            self.total_hits += 1
-            self.knowledge_map[row, col] = -2
+            self._process_hit_sunk(row, col)
 
-            #Limpa o estado de caça
-            self._active_hits.clear()
-            self._target_queue.clear()
-
-            #Retorna para HUNT 
-            self._mode = "HUNT"
-
-        #Zera a probabilidade da casa atirada
-        self.belief_state[row, col] = 0.0
 
     #Modo de target do agente
     def _target_mode_action(self):
