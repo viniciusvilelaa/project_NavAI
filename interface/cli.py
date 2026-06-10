@@ -223,4 +223,9 @@ class BattleshipCLI:
 
 
 def run_cli(agent: Any | None = None) -> str:
-    return BattleshipCLI(agent=agent).run()
+    cli = BattleshipCLI(agent=agent)
+    try:
+        return cli.run()
+    except KeyboardInterrupt:
+        cli.renderer.write("Jogo interrompido subitamente.")
+        return "interrupted"
