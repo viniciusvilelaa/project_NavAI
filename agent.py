@@ -70,9 +70,67 @@ class NavalAgent:
 
         return neighbors
     
+    def _enqueue_neighbors(self, row,col):
+        hits_same_line = []
+        hits_same_col = []
+        candidates = []
+        
+        
+        for r, c in self._active_hits:
+            if r == row:
+                hits_same_line.append((r,c))
+            if c == col:
+                hits_same_col.append((r,c))
+        
+        if len(hits_same_line) >= 2:
+            candidates = [(row, col-1), (row, col+1)]
+        elif len(hits_same_col) >= 2:
+            candidates = [(row - 1, col), (row + 1, col)]
+        else:
+            candidates = [
+                (row - 1, col), #Cima
+                (row + 1, col), #Baixo
+                (row, col - 1), #Esquerda
+                (row, col + 1)
+            ]
+            
+        for candidate_row, candidate_col in candidates:
+            if 0 <= candidate_row < self.board_size and 0 <= candidate_col < self.board_size:
+                if (candidate_row, candidate_col) not in self.shots_fired and (candidate_row, candidate_col) not in self._target_queue:
+                    self._target_queue.append((candidate_row, candidate_col))
+                    
+            
+                
+    
+    def _process_miss(self, row,col):
+        self.knowledge_map[row,col] = -1
+        self.belief_state[row, col] = 0
+        self.total_misses += 1
+    
+    def _process_hit(self, row, col):
+        self.knowledge_map[row,col] = -2
+        self.belief_state[row, col] = 0
+        self.total_hits += 1
+        self._active_hits.append((row,col))
+
+        
+        self._mode = "TARGET"
+        
+        self._enqueue_neighbors(row, col)
+    
+    def _process_hit_sunk(self, row, col):
+        self.knowledge_map[row][col] = -2
+        self.belief_state[row][col] = 0.0
+        self.total_hits += 1
+        
+        self._active_hits.clear()
+        self._target_queue.clear()
+        
+        self._mode = "HUNT"
 
     #Processa o feedback do tabuleiro após cada tiro
     def update(self, row, col, result):
+        result = result.upper()
         
         # Registra o tiro
         self.shots_fired.add((row, col))
