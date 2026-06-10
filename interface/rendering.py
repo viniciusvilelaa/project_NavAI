@@ -80,6 +80,7 @@ class ConsoleRenderer:
         show_enemy: bool = True,
         flash_attacker: str | None = None,
         flash_active: bool = False,
+        reveal_enemy_remaining: bool = False,
     ) -> Any:
         if not self.console:
             return format_board_plain("Sua frota", human_board, reveal_ships=True)
@@ -104,6 +105,7 @@ class ConsoleRenderer:
                     selection=selection if selection and selection[0] == "agent" else None,
                     selection_active=selection_active,
                     placement_preview=placement_preview if placement_preview and placement_preview[0] == "agent" else None,
+                    reveal_remaining_ships=reveal_enemy_remaining,
                 )
             )
         panels.append(make_side_panel(history, board_rows, flash_attacker=flash_attacker, flash_active=flash_active))
@@ -252,7 +254,12 @@ class ConsoleRenderer:
         if human_board is None or agent_board is None:
             return outcome
 
-        summary = self.make_screen(human_board, agent_board, history or [])
+        summary = self.make_screen(
+            human_board,
+            agent_board,
+            history or [],
+            reveal_enemy_remaining=title.upper() == "LOSER",
+        )
         return Group(summary, outcome) if Group else outcome
 
 
@@ -272,6 +279,7 @@ def make_board_table(
     selection: tuple[str, int, int] | None = None,
     selection_active: bool = True,
     placement_preview: tuple[str, int, int, int, str, bool] | None = None,
+    reveal_remaining_ships: bool = False,
 ) -> Any:
     row_count, col_count = board_shape(board)
     preview_cells = preview_coordinates(placement_preview, row_count, col_count)
@@ -298,6 +306,7 @@ def make_board_table(
                 selection_active=selection_active,
                 preview=(row, col) in preview_cells,
                 preview_valid=preview_valid,
+                reveal_remaining_ship=reveal_remaining_ships,
             )
             for col in range(col_count)
         ]
@@ -391,12 +400,22 @@ def render_cell(
     selection_active: bool = True,
     preview: bool = False,
     preview_valid: bool = True,
+    reveal_remaining_ship: bool = False,
 ) -> Any:
     text_value = " " * CELL_WIDTH
     if Text:
         return Text(
             text_value,
-            style=cell_style(value, reveal_ships, checker, selected, selection_active, preview, preview_valid),
+            style=cell_style(
+                value,
+                reveal_ships,
+                checker,
+                selected,
+                selection_active,
+                preview,
+                preview_valid,
+                reveal_remaining_ship,
+            ),
         )
     if preview:
         style = "black on green bold" if preview_valid else "white on red bold"
@@ -408,6 +427,8 @@ def render_cell(
         return f"[on blue]{text_value}[/]"
     if value == -2:
         return f"[on red]{text_value}[/]"
+    if value > 0 and reveal_remaining_ship:
+        return f"[on #ff8c00]{text_value}[/]"
     if value > 0 and reveal_ships:
         return f"[on green]{text_value}[/]"
     background = "on grey19" if checker else "on grey11"
@@ -432,6 +453,7 @@ def cell_style(
     selection_active: bool,
     preview: bool,
     preview_valid: bool,
+    reveal_remaining_ship: bool,
 ) -> str:
     if preview:
         return "on green" if preview_valid else "on red"
@@ -441,6 +463,8 @@ def cell_style(
         return "on blue"
     if value == -2:
         return "on red"
+    if value > 0 and reveal_remaining_ship:
+        return "on #ff8c00"
     if value > 0 and reveal_ships:
         return "on green"
     return "on grey23" if checker else "on grey15"
