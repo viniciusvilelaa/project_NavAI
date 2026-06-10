@@ -56,7 +56,7 @@ class BattleshipCLI:
             if self.agent_board.all_ships_sunk():
                 self.renderer.show_outcome(
                     "WINNER",
-                    f"Voce venceu em {self.turn} turnos.",
+                    f"Você venceu em {self.turn} turnos.",
                     self.human_board,
                     self.agent_board,
                     self.history,
@@ -80,7 +80,7 @@ class BattleshipCLI:
         if winner == "human":
             self.renderer.show_outcome(
                 "WINNER",
-                "Vitoria forcada por debug.",
+                "Vitória forçada por debug.",
                 self.human_board,
                 self.agent_board,
                 self.history,
@@ -89,7 +89,7 @@ class BattleshipCLI:
 
         self.renderer.show_outcome(
             "LOSER",
-            "Derrota forcada por debug.",
+            "Derrota forçada por debug.",
             self.human_board,
             self.agent_board,
             self.history,
@@ -109,7 +109,7 @@ class BattleshipCLI:
         for name, size in self.fleet:
             while True:
                 row, col, orientation = self._select_ship_placement(
-                    f"Posicione {name} tamanho {size}: setas movem, espaco rotaciona, Enter confirma",
+                    f"Posicione {name} tamanho {size}: setas movem, espaço rotaciona, Enter confirma",
                     size,
                 )
                 try:
@@ -118,7 +118,7 @@ class BattleshipCLI:
                     self.last_placement_orientation = orientation
                     break
                 except ValueError as exc:
-                    self.renderer.write(f"Posicionamento invalido: {exc}")
+                    self.renderer.write(f"Posicionamento inválido: {exc}")
 
     def _human_turn(self) -> ShotResult:
         while True:
@@ -131,12 +131,13 @@ class BattleshipCLI:
 
             shot = ShotResult("human", row, col, normalize_result(result), ship_id)
             if shot.result == "tiro repetido":
-                self.renderer.write(f"{shot.coordinate} ja foi atacada. Escolha outra coordenada.")
+                self.renderer.write(f"{shot.coordinate} já foi atacada. Escolha outra coordenada.")
                 continue
 
             self.history.append(shot)
             self.human_metrics.record_shot(to_agent_result(shot.result))
-            self.renderer.write(f"Voce atirou em {shot.coordinate}: {shot.result}.")
+            self.renderer.flash_result(self.human_board, self.agent_board, self.history, "human")
+            self.renderer.write(f"Você atirou em {shot.coordinate}: {display_result(shot.result)}.")
             return shot
 
     def _agent_turn(self) -> ShotResult:
@@ -154,10 +155,11 @@ class BattleshipCLI:
 
             self.history.append(shot)
             self.agent_metrics.record_shot(to_agent_result(shot.result))
-            self.renderer.write(f"Agente atirou em {shot.coordinate}: {shot.result}.")
+            self.renderer.flash_result(self.human_board, self.agent_board, self.history, "agent")
+            self.renderer.write(f"Agente atirou em {shot.coordinate}: {display_result(shot.result)}.")
             return shot
 
-        raise RuntimeError("O agente nao conseguiu gerar um tiro valido.")
+        raise RuntimeError("O agente não conseguiu gerar um tiro válido.")
 
     def _build_agent_state(self) -> PublicGameState:
         return PublicGameState(
@@ -209,7 +211,7 @@ class BattleshipCLI:
                 return True
             if value in {"n", "nao", "não", "no"}:
                 return False
-            self.renderer.write("Entrada invalida. Responda s ou n.")
+            self.renderer.write("Entrada inválida. Responda s ou n.")
 
 
 def run_cli(agent: Any | None = None) -> str:

@@ -94,7 +94,7 @@ class ConsoleRenderer:
         if show_enemy:
             panels.append(
                 make_board_table(
-                    "Aguas inimigas",
+                    "Águas inimigas",
                     agent_board,
                     reveal_ships=False,
                     selection=selection if selection and selection[0] == "agent" else None,
@@ -120,7 +120,7 @@ class ConsoleRenderer:
         if not self.console or not Panel or Live is None:
             if human_board is not None and agent_board is not None:
                 print(format_board_plain("Sua frota", human_board, reveal_ships=True))
-                print(format_board_plain("Aguas inimigas", agent_board, reveal_ships=False))
+                print(format_board_plain("Águas inimigas", agent_board, reveal_ships=False))
             print(title)
             print(subtitle)
             return
@@ -175,9 +175,9 @@ class ConsoleRenderer:
         if not history:
             return
 
-        print("Ultimos tiros:")
+        print("Últimos tiros:")
         for item in history[-5:]:
-            print(f"  {item.attacker}: {item.coordinate} -> {item.result}")
+            print(f"  {item.attacker}: {item.coordinate} -> {display_result(item.result)}")
 
 
 def make_board_table(

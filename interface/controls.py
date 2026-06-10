@@ -106,7 +106,7 @@ class CoordinateSelector:
     ) -> tuple[int, int, str]:
         if not self.renderer.supports_live or Live is None:
             row, col = self._prompt_coordinate_fallback(label, target_size(human_board, agent_board, "human"))
-            orientation = input("Orientacao [H/V]: ").strip().lower()
+            orientation = input("Orientação [H/V]: ").strip().lower()
             if orientation == "win":
                 raise DebugOutcome("human")
             if orientation == "loss":
@@ -162,7 +162,7 @@ class CoordinateSelector:
                     is_valid, reason = human_board.is_valid_placement(ship_size, row, col, orientation)
                     if is_valid:
                         return row, col, orientation
-                    status = f"{label} | Posicao invalida: {reason}"
+                    status = f"{label} | Posição inválida: {reason}"
                     debug_buffer = ""
                     live.update(
                         self.renderer.make_screen(

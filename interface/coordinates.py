@@ -21,7 +21,7 @@ def parse_coordinate(value: str, board_size: int = BOARD_SIZE) -> tuple[int, int
         return validate_coordinate(row, col, board_size)
 
     raise ValueError(
-        f"Coordenada invalida. Use A1 ate {format_coordinate(board_size - 1, board_size - 1)}, "
+        f"Coordenada inválida. Use A1 até {format_coordinate(board_size - 1, board_size - 1)}, "
         "ou linha,coluna."
     )
 
@@ -34,7 +34,7 @@ def normalize_coordinate(value: Any, board_size: int | None = None) -> tuple[int
         row = value.get("row", value.get("linha", value.get("x")))
         col = value.get("col", value.get("column", value.get("coluna", value.get("y"))))
         if row is None or col is None:
-            raise ValueError("Dicionario de tiro precisa ter row/col ou linha/coluna.")
+            raise ValueError("Dicionário de tiro precisa ter row/col ou linha/coluna.")
         return validate_coordinate(int(row), int(col), board_size)
 
     if isinstance(value, (tuple, list)) and len(value) >= 2:

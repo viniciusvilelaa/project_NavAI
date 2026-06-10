@@ -26,7 +26,7 @@ class RandomAgent:
         if not self.available and state is not None:
             self._reset_available(len(state.enemy_view))
         if not self.available:
-            raise RuntimeError("Nao ha tiros disponiveis.")
+            raise RuntimeError("Não há tiros disponíveis.")
         return self.available.pop(random.randrange(len(self.available)))
 
     def observe_result(self, result: ShotResult, state: PublicGameState | None = None) -> None:
