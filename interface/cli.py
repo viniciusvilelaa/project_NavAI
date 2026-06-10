@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 from game_engine import BattleShipBoard
+from metrics import Metrics
 from interface.agent_adapter import AgentAdapter, RandomAgent
+from interface.agent_adapter import to_agent_result
 from interface.constants import DEFAULT_FLEET
 from interface.contracts import BoardProtocol
 from interface.controls import CoordinateSelector, DebugOutcome
@@ -30,6 +32,8 @@ class BattleshipCLI:
         self.human_board = self.board_factory()
         self.agent_board = self.board_factory()
         self.history: list[ShotResult] = []
+        self.human_metrics = Metrics()
+        self.agent_metrics = Metrics()
         self.last_selection = {"human": (0, 0), "agent": (0, 0)}
         self.last_placement_orientation = "H"
         self.turn = 1
@@ -131,6 +135,7 @@ class BattleshipCLI:
                 continue
 
             self.history.append(shot)
+            self.human_metrics.record_shot(to_agent_result(shot.result))
             self.renderer.write(f"Voce atirou em {shot.coordinate}: {shot.result}.")
             return shot
 
@@ -148,6 +153,7 @@ class BattleshipCLI:
                 continue
 
             self.history.append(shot)
+            self.agent_metrics.record_shot(to_agent_result(shot.result))
             self.renderer.write(f"Agente atirou em {shot.coordinate}: {shot.result}.")
             return shot
 

@@ -8,7 +8,7 @@ from interface.coordinates import normalize_coordinate
 from interface.models import PublicGameState, ShotResult
 
 
-SHOT_METHODS = ("choose_shot", "get_shot", "next_shot", "select_target", "act", "play")
+SHOT_METHODS = ("choose_shot", "choose_action", "get_shot", "next_shot", "select_target", "act", "play")
 OBSERVE_METHODS = ("observe_result", "register_result", "update", "feedback", "observe")
 PLACEMENT_METHODS = ("place_fleet", "place_ships", "setup_board")
 
@@ -60,7 +60,7 @@ class AgentAdapter:
         for method_name in OBSERVE_METHODS:
             method = getattr(self.agent, method_name, None)
             if callable(method):
-                call_with_supported_args(method, result=result, state=state)
+                call_agent_observer(method, result, state)
                 return
 
     def place_fleet(self, board: Any, fleet: list[tuple[str, int]]) -> bool:
@@ -89,3 +89,34 @@ def call_with_supported_args(method: Any, **kwargs: Any) -> Any:
         return method(kwargs["state"])
 
     return method()
+
+
+def call_agent_observer(method: Any, result: ShotResult, state: PublicGameState) -> Any:
+    signature = inspect.signature(method)
+    parameters = signature.parameters
+
+    if {"row", "col", "result"}.issubset(parameters):
+        return method(row=result.row, col=result.col, result=to_agent_result(result.result))
+
+    if {"linha", "coluna", "resultado"}.issubset(parameters):
+        return method(linha=result.row, coluna=result.col, resultado=to_agent_result(result.result))
+
+    if len(parameters) >= 3 and not any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
+    ):
+        return method(result.row, result.col, to_agent_result(result.result))
+
+    return call_with_supported_args(method, result=result, state=state)
+
+
+def to_agent_result(result: str) -> str:
+    normalized = result.strip().lower()
+    if normalized == "agua":
+        return "MISS"
+    if normalized == "acerto":
+        return "HIT"
+    if normalized == "afundado":
+        return "SUNK"
+    if normalized == "tiro repetido":
+        return "REPEATED"
+    return result.upper()

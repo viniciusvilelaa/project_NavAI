@@ -26,8 +26,8 @@ class BoardProtocol(Protocol):
 
 
 class AgentProtocol(Protocol):
-    def choose_shot(self, state: PublicGameState) -> tuple[int, int]:
+    def choose_action(self) -> tuple[int, int]:
         ...
 
-    def observe_result(self, result: ShotResult, state: PublicGameState) -> None:
+    def update(self, row: int, col: int, result: str) -> None:
         ...
