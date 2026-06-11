@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Metrics: 
     def __init__(self):
         self.total_shots = 0
@@ -58,3 +61,14 @@ class Metrics:
             # Consistência
             "desvio_padrao_tiros": round(np.std(shots_list), 2),
     }
+
+    def format_summary(self) -> str:
+        summary = self.get_summary()
+        if isinstance(summary, str):
+            return summary
+        return (
+            f"Tiros disparados : {summary['media_tiros']}\n"
+            f"Taxa de acerto   : {summary['media_acerto'] * 100:.1f}%\n"
+            f"Melhor partida   : {summary['menor_tiros']} tiros\n"
+            f"Desvio padrão    : {summary['desvio_padrao_tiros']}"
+    )
