@@ -54,6 +54,7 @@ class BattleshipCLI:
                 return self._finish_debug_outcome(outcome.winner)
 
             if self.agent_board.all_ships_sunk():
+                self.human_metrics.end_game()
                 self.renderer.show_outcome(
                     "WINNER",
                     f"Você venceu em {self.turn} turnos.",
@@ -61,10 +62,12 @@ class BattleshipCLI:
                     self.agent_board,
                     self.history,
                 )
+                self._show_metrics()
                 return "human"
 
             self._agent_turn()
             if self.human_board.all_ships_sunk():
+                self.human_metrics.end_game()
                 self.renderer.show_outcome(
                     "LOSER",
                     f"O agente venceu em {self.turn} turnos.",
@@ -72,6 +75,7 @@ class BattleshipCLI:
                     self.agent_board,
                     self.history,
                 )
+                self._show_metrics()
                 return "agent"
 
             self.turn += 1
@@ -220,6 +224,9 @@ class BattleshipCLI:
             if value in {"n", "nao", "não", "no"}:
                 return False
             self.renderer.write("Entrada inválida. Responda s ou n.")
+
+    def _show_metrics(self) -> None:
+        self.renderer.write(self.human_metrics.format_summary())
 
 
 def run_cli(agent: Any | None = None) -> str:
