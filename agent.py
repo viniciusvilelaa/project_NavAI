@@ -2,10 +2,11 @@ import numpy as np
 import random
 
 class NavalAgent:
-    def __init__(self , board_size=10):
-        #Definindo o tamanho do tabuleiro
+    def __init__(self, board_size=10):
         self.board_size = board_size
+        self.reset()
 
+    def reset(self):
         #Inicializando mapa de conhecimento
         self.knowledge_map = np.zeros((self.board_size,self.board_size), dtype=int)
         
@@ -22,7 +23,8 @@ class NavalAgent:
         #Lista de tiros dados
         self.shots_fired = set()
 
-        # Metricas de perfomace do agente
+        # Metricas de perfomace do agente (NOT RESETTING THESE SO WE CAN ACCUMULATE OR KEEP THEM IN METRICS.PY)
+        # Actually metrics.py handles match history, but NavalAgent tracks its own.
         self.total_shots = 0
         self.total_hits = 0
         self.total_misses = 0
@@ -196,6 +198,8 @@ class NavalAgent:
                 for c in range(self.board_size)
                 if (r, c) not in self.shots_fired
             ]
+            if not available:
+                return (0, 0) # Failsafe prevent crash
             return random.choice(available)
     
         #Maior valor de probabilidade presente no belief        

@@ -71,6 +71,14 @@ class AgentAdapter:
                 return bool(getattr(board, "ships", None))
         return False
 
+    def reset(self) -> None:
+        reset_methods = ("reset", "reset_state", "clear")
+        for method_name in reset_methods:
+            method = getattr(self.agent, method_name, None)
+            if callable(method):
+                method()
+                return
+
 
 def call_with_supported_args(method: Any, **kwargs: Any) -> Any:
     signature = inspect.signature(method)

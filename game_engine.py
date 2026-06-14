@@ -116,15 +116,30 @@ class BattleShipBoard:
     def place_ships_randomly(self):
         ship_sizes = [5, 4, 3, 3, 2]
 
-        for size in ship_sizes:
-            placed = False
-            while not placed:
-                row = np.random.randint(0,10)
-                col = np.random.randint(0, 10)
-                orientation = np.random.choice(['H','V'])
+        for _ in range(100): # max 100 board restarts
+            self.grid = np.zeros((10,10), dtype=int)
+            self.ships = {}
+            self._next_ship_id = 1
+            
+            success_all = True
+            for size in ship_sizes:
+                placed = False
+                for _ in range(100): # max 100 retries per ship
+                    row = np.random.randint(0,10)
+                    col = np.random.randint(0, 10)
+                    orientation = np.random.choice(['H','V'])
 
-                is_valid, _ = self.is_valid_placement(size, row, col, orientation)
-                if is_valid:
-                    self.place_ship(size, row, col, orientation)
-                    placed = True
+                    is_valid, _ = self.is_valid_placement(size, row, col, orientation)
+                    if is_valid:
+                        self.place_ship(size, row, col, orientation)
+                        placed = True
+                        break
+                
+                if not placed:
+                    success_all = False
+                    break
+            
+            if success_all:
+                return
         
+        raise RuntimeError("Não foi possível posicionar os navios aleatoriamente.")

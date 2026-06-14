@@ -25,6 +25,12 @@ class Metrics:
         else:
             accuracy = self.total_hits / self.total_shots
 
+        # Validation (Sanity Checks)
+        if self.total_shots > 100:
+            raise ValueError(f"Consistência quebrada: número de tiros ({self.total_shots}) excede 100.")
+        if accuracy > 1.0 or accuracy < 0.0:
+            raise ValueError(f"Consistência quebrada: precisão ({accuracy}) fora do intervalo [0,1].")
+
         partida = {
             "total_shots": self.total_shots,
             "total_hits": self.total_hits,
